@@ -1,0 +1,98 @@
+{
+  "kind": "List",
+  "apiVersion": "v1",
+  "items": [
+    {
+      "kind": "ReplicationController",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "dashboard",
+        "namespace": "kube-system",
+        "labels": {
+          "app": "dashboard"
+        }
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "app": "dashboard"
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "dashboard"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "dashboard",
+                "image": "dreg:5000/kubernetes-dashboard-amd64:canary",
+                "ports": [
+                  {
+                    "containerPort": 9090,
+                    "protocol": "TCP"
+                  }
+                ],
+                "resources": {},
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/",
+                    "port": 9090,
+                    "scheme": "HTTP"
+                  },
+                  "initialDelaySeconds": 30,
+                  "timeoutSeconds": 30,
+                  "periodSeconds": 10,
+                  "successThreshold": 1,
+                  "failureThreshold": 3
+                },
+                "terminationMessagePath": "/dev/termination-log",
+                "imagePullPolicy": "Always"
+              }
+            ],
+            "restartPolicy": "Always",
+            "terminationGracePeriodSeconds": 30,
+            "dnsPolicy": "ClusterFirst",
+            "securityContext": {}
+          }
+        }
+      },
+      "status": {
+        "replicas": 1,
+        "fullyLabeledReplicas": 1,
+        "observedGeneration": 1
+      }
+    },
+    {
+      "kind": "Service",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "dashboard",
+        "namespace": "kube-system",
+        "labels": {
+          "app": "dashboard"
+        }
+      },
+      "spec": {
+        "ports": [
+          {
+            "protocol": "TCP",
+            "port": 9090,
+            "targetPort": 9090,
+            "nodePort": 30163
+          }
+        ],
+        "selector": {
+          "app": "dashboard"
+        },
+        "type": "NodePort",
+        "sessionAffinity": "None"
+      },
+      "status": {
+        "loadBalancer": {}
+      }
+    }
+  ]
+}
+

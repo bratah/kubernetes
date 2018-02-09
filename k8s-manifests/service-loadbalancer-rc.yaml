@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: service-loadbalancer
+  labels:
+    app: service-loadbalancer
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    app: service-loadbalancer
+    version: v1
+  template:
+    metadata:
+      labels:
+        app: service-loadbalancer
+        version: v1
+    spec:
+      nodeSelector:
+        role: loadbalancer
+      containers:
+      - image: dreg:5000/servicelb:0.4
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8899
+            scheme: HTTP
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+        name: haproxy
+        ports:
+        # kubernetes-dashboard
+        - containerPort: 9090
+          hostPort: 9090
+          protocol: TCP
+        # ers
+        - containerPort: 8081
+          hostPort: 8081
+          protocol: TCP
+        # mysql
+        - containerPort: 3306
+          hostPort: 3306
+          protocol: TCP
+        # core-supervisord
+        - containerPort: 59001
+          hostPort: 59001
+          protocol: TCP
+        # ers
+        - containerPort: 8080
+          hostPort: 8080
+          protocol: TCP
+        # ers
+        - containerPort: 8911
+          hostPort: 8911
+          protocol: TCP
+        # ers
+        - containerPort: 8680
+          hostPort: 8680
+          protocol: TCP
+        # ers
+        - containerPort: 8337
+          hostPort: 8337
+          protocol: TCP
+        # ers
+        - containerPort: 8777
+          hostPort: 8777
+          protocol: TCP
+        # ers
+        - containerPort: 8092
+          hostPort: 8092
+          protocol: TCP
+        # ers
+        - containerPort: 4567
+          hostPort: 4567
+          protocol: TCP
+        # haproxy stats
+        - containerPort: 1936
+          hostPort: 1936
+          protocol: TCP
+        resources: {}
+        args:
+        - --tcp-services=core:59001,mysql:3306,kubedash:9091,kubernetes-dashboard:9090,core:8080,core:8911,tx:8680,tx:8337,tx:8777,tx:8092,tx:4567

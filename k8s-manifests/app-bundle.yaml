@@ -1,0 +1,134 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mysql
+  labels:
+    name: mysql
+spec:
+  containers:
+  - image: dreg:5000/mariadb-std:latest
+    name: mysql
+    env:
+    - name: DB_DUMP_FILE
+      # ENV OPT FOR DB TYPE
+      value: default
+    #- name: lb
+    #  value: 10.10.64.242
+    ports:
+    - containerPort: 3306
+      name: mysql
+    #volumeMounts:
+    # name must match the volume name below
+    #- name: mysql-storage
+      # mount path within the container
+    #  mountPath: /var/lib/mysql
+  #volumes:
+  #- name: mysql-storage
+  #  emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: mysql
+  name: mysql
+spec:
+  type: NodePort
+  ports:
+    # the port that this service should serve on
+    - port: 3306
+  # label keys and values that must match in order to receive traffic for this service
+  selector:
+    name: mysql
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: core
+  labels:
+    name: core
+spec:
+  containers:
+  - image: dreg:5000/app-backend:latest
+    name: core
+    env:
+    - name: NODE_TYPE
+      value: core
+    - name: JAVA_XMX
+      value: 128m
+    - name: LB_HOST_IP
+      value: 10.10.4.46
+    ports:
+    - containerPort: 59001
+      name: core59001
+    - containerPort: 8080
+      name: core8080
+    - containerPort: 8911
+      name: core8911
+    #volumeMounts:
+    # name must match the volume name below
+    #- name: mysql-storage
+      # mount path within the container
+    #  mountPath: /var/lib/mysql
+  #volumes:
+  #- name: mysql-storage
+  #  emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: core
+  name: core
+spec:
+  type: NodePort
+  ports:
+    # the port that this service should serve on
+    - port: 59001
+      name: core59001
+    - port: 8080
+      name: core8080
+    - port: 8911
+      name: core8911
+  # label keys and values that must match in order to receive traffic for this service
+  selector:
+    name: core
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tx
+  labels:
+    name: tx
+spec:
+  containers:
+  - image: dreg:5000/app-frontend-std:latest
+    name: tx
+    env:
+    - name: NODE_TYPE
+      value: tx
+    - name: JAVA_XMX
+      value: 128m
+    - name: LB_HOST_IP
+      value: 10.10.4.46
+    ports:
+    - containerPort: 8081
+      name: tx8081
+    - containerPort: 8680
+      name: tx8680
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: tx
+  name: tx
+spec:
+  type: NodePort
+  ports:
+    - port: 8081
+      name: tx8081
+    - port: 8680
+      name: tx8680
+  selector:
+    name: tx
